@@ -1,0 +1,51 @@
+{
+  "name": "nnet-svg",
+  "version": "0.1.0",
+  "description": "Render a dense feed-forward neural network as a static SVG",
+  "keywords": [
+    "neural-network",
+    "svg",
+    "visualization",
+    "d3",
+    "observable"
+  ],
+  "homepage": "https://github.com/dkirkby/nnet-svg#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dkirkby/nnet-svg.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dkirkby/nnet-svg/issues"
+  },
+  "license": "MIT",
+  "author": "David Kirkby <dkirkby@uci.edu>",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "npm run test && npm run build"
+  },
+  "dependencies": {
+    "d3-selection": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/d3-selection": "^3.0.11",
+    "jsdom": "^29.1.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
