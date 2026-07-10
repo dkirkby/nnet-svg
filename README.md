@@ -34,6 +34,7 @@ npm install
 npm test           # vitest
 npm run typecheck  # tsc --noEmit
 npm run build      # emits ESM + .d.ts to dist/
+npm run demo       # then open http://localhost:3000/demo/ (build first)
 ```
 
 ## License

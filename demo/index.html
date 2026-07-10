@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>nnet-svg demo</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 2rem;
+      color: #1a1a2e;
+      background: #fafafa;
+    }
+    h1 { font-size: 1.4rem; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1rem;
+    }
+    figure {
+      margin: 0;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1rem;
+      background: white;
+    }
+    figcaption {
+      font-size: 0.8rem;
+      color: #555;
+      margin-bottom: 0.5rem;
+      font-family: ui-monospace, "SF Mono", monospace;
+    }
+    .error { color: #b00020; }
+  </style>
+  <script type="importmap">
+    { "imports": { "d3-selection": "https://esm.sh/d3-selection@3" } }
+  </script>
+</head>
+<body>
+  <h1>nnet-svg — manual visual check</h1>
+  <p>Rebuild with <code>npm run build</code> after source changes, then reload.</p>
+  <div class="grid" id="grid"></div>
+  <script type="module">
+    const grid = document.getElementById("grid");
+    try {
+      const { createDenseNetworkSvg } = await import("../dist/index.js");
+      const examples = [
+        ["spec example: [4, 16, 8, 2], max 8", { layers: [4, 16, 8, 2], maxDisplayedNodes: 8 }],
+        ["truncation: [100, 6, 3], max 6", { layers: [100, 6, 3], maxDisplayedNodes: 6 }],
+        ["default truncation (max 12): [20, 16, 10]", { layers: [20, 16, 10] }],
+        ["vertical: [3, 8, 4, 1]", { layers: [3, 8, 4, 1], orientation: "vertical" }],
+        ["nodeSpread: -1 (pinned to edges)", { layers: [4, 4, 4], nodeSpread: -1 }],
+        ["nodeSpread: +1 (insets equal gaps)", { layers: [4, 4, 4], nodeSpread: 1 }],
+        ["layerSpread: -1", { layers: [4, 4, 4], layerSpread: -1 }],
+        ["single-node layers: [1, 1, 1]", { layers: [1, 1, 1] }],
+        [
+          "responsive: false, viewBox 320x180",
+          { layers: [3, 5, 2], responsive: false, viewBox: { width: 320, height: 180 } },
+        ],
+      ];
+      for (const [caption, options] of examples) {
+        const figure = document.createElement("figure");
+        const figcaption = document.createElement("figcaption");
+        figcaption.textContent = caption;
+        figure.append(figcaption, createDenseNetworkSvg(options));
+        grid.append(figure);
+      }
+    } catch (error) {
+      grid.innerHTML = `<p class="error">Failed to render: ${error.message} —
+        did you run <code>npm run build</code> first?</p>`;
+      throw error;
+    }
+  </script>
+</body>
+</html>
