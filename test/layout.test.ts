@@ -97,10 +97,22 @@ describe("spacing (spec worked example: layers [3, 8, 4, 1], defaults)", () => {
 });
 
 describe("spread parameters", () => {
-  it("nodeSpread -1 pins outer nodes to the axis edges", () => {
+  it("nodeSpread -1 pins outer nodes one nodeRadius margin from the axis edges", () => {
     const layout = layoutDenseNetwork({ layers: [4, 2], nodeSpread: -1 });
+    // Unpadded gaps: 360/3 = 120 (layer 0), 360/1 = 360 (layer 1) -> radius 15.
+    expectClose(layout.nodeRadius, 15);
     const ys = layerNodes(layout, 0).map((node) => node.y);
-    [0, 120, 240, 360].forEach((expected, i) => expectClose(ys[i], expected));
+    // Padded axis [15, 345], gap (360 - 30)/3 = 110.
+    [15, 125, 235, 345].forEach((expected, i) => expectClose(ys[i], expected));
+    expectClose(ys[0], layout.nodeRadius);
+    expectClose(360 - ys[3], layout.nodeRadius);
+  });
+
+  it("nodeSpread -1 margin follows an explicit nodeRadius", () => {
+    const layout = layoutDenseNetwork({ layers: [4, 2], nodeSpread: -1, nodeRadius: 10 });
+    const ys = layerNodes(layout, 0).map((node) => node.y);
+    expectClose(ys[0], 10);
+    expectClose(ys[3], 350);
   });
 
   it("nodeSpread +1 makes edge insets equal to inter-node gaps", () => {
@@ -109,10 +121,32 @@ describe("spread parameters", () => {
     [72, 144, 216, 288].forEach((expected, i) => expectClose(ys[i], expected));
   });
 
-  it("layerSpread -1 pins outer layers to the axis edges", () => {
+  it("applies no margin for spread values greater than -1", () => {
+    const layout = layoutDenseNetwork({ layers: [2, 2], nodeSpread: -0.5 });
+    // gap = 360/1.5 = 240, inset = (0.5/1.5)*180 = 60; no padding involved.
+    const ys = layerNodes(layout, 0).map((node) => node.y);
+    [60, 300].forEach((expected, i) => expectClose(ys[i], expected));
+  });
+
+  it("layerSpread -1 pins outer layers one nodeRadius margin from the axis edges", () => {
     const layout = layoutDenseNetwork({ layers: [2, 2, 2], layerSpread: -1 });
+    // Node gaps: 360/2 = 180 -> radius 22.5; padded layer axis [22.5, 617.5].
+    expectClose(layout.nodeRadius, 22.5);
     const xs = [0, 1, 2].map((layerIndex) => layerNodes(layout, layerIndex)[0].x);
-    [0, 320, 640].forEach((expected, i) => expectClose(xs[i], expected));
+    [22.5, 320, 617.5].forEach((expected, i) => expectClose(xs[i], expected));
+  });
+
+  it("pads both axes when both spreads are -1", () => {
+    const layout = layoutDenseNetwork({
+      layers: [2, 2],
+      nodeSpread: -1,
+      layerSpread: -1,
+      nodeRadius: 20,
+    });
+    const ys = layerNodes(layout, 0).map((node) => node.y);
+    [20, 340].forEach((expected, i) => expectClose(ys[i], expected));
+    const xs = [0, 1].map((layerIndex) => layerNodes(layout, layerIndex)[0].x);
+    [20, 620].forEach((expected, i) => expectClose(xs[i], expected));
   });
 
   it("a single node with spread -1 is centered without dividing by zero", () => {

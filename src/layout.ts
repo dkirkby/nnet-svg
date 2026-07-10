@@ -21,11 +21,20 @@ const DEFAULT_VIEWBOX = {
  * gap = L/(N+spread), inset = (1+spread)/(N+spread) * (L/2), so that
  * 2*inset + (N-1)*gap = L. A single point is centered without evaluating
  * the gap formula (avoids division by zero when spread is -1).
+ *
+ * A non-zero `margin` pads both axis ends, computing positions over the
+ * reduced length `axisLength - 2*margin` and shifting them by `margin`.
  */
-function axisPositions(count: number, axisLength: number, spread: number): number[] {
+function axisPositions(
+  count: number,
+  axisLength: number,
+  spread: number,
+  margin: number,
+): number[] {
   if (count === 1) return [axisLength / 2];
-  const gap = axisLength / (count + spread);
-  const inset = ((1 + spread) / (count + spread)) * (axisLength / 2);
+  const usableLength = axisLength - 2 * margin;
+  const gap = usableLength / (count + spread);
+  const inset = margin + ((1 + spread) / (count + spread)) * (usableLength / 2);
   return Array.from({ length: count }, (_, index) => inset + index * gap);
 }
 
@@ -75,19 +84,41 @@ export function layoutDenseNetwork(options: DenseNetworkLayoutOptions): DenseNet
   const layerAxisLength = horizontal ? viewBox.width : viewBox.height;
   const nodeAxisLength = horizontal ? viewBox.height : viewBox.width;
 
-  const layerPositions = axisPositions(options.layers.length, layerAxisLength, layerSpread);
+  const slotsPerLayer = options.layers.map((size) => layerSlots(size, maxDisplayedNodes));
+
+  // Default radius: 1/8 of the smallest displayed inter-node gap; if every
+  // layer displays a single node there is no gap, so fall back to L/25.
+  // Gaps are measured on the unpadded axis: the spread margin below depends
+  // on nodeRadius, so the radius must be resolved first (spec §8).
+  let smallestNodeGap = Infinity;
+  for (const slots of slotsPerLayer) {
+    if (slots.length > 1) {
+      smallestNodeGap = Math.min(smallestNodeGap, nodeAxisLength / (slots.length + nodeSpread));
+    }
+  }
+  const nodeRadius =
+    options.nodeRadius ??
+    (Number.isFinite(smallestNodeGap) ? smallestNodeGap / 8 : nodeAxisLength / 25);
+  const ellipsisDotRadius = options.ellipsisDotRadius ?? nodeRadius / 4;
+
+  // A spread of -1 pins outer positions to the axis ends, which would clip
+  // node circles at the viewBox boundary; pad that axis by nodeRadius (spec §8).
+  const layerMargin = layerSpread === -1 ? nodeRadius : 0;
+  const nodeMargin = nodeSpread === -1 ? nodeRadius : 0;
+
+  const layerPositions = axisPositions(
+    options.layers.length,
+    layerAxisLength,
+    layerSpread,
+    layerMargin,
+  );
 
   const items: LayoutItem[] = [];
   // Displayed real nodes per layer, in visible order, for edge generation.
   const displayedNodes: { nodeIndex: number; x: number; y: number }[][] = [];
-  let smallestNodeGap = Infinity;
 
-  options.layers.forEach((size, layerIndex) => {
-    const slots = layerSlots(size, maxDisplayedNodes);
-    const nodePositions = axisPositions(slots.length, nodeAxisLength, nodeSpread);
-    if (slots.length > 1) {
-      smallestNodeGap = Math.min(smallestNodeGap, nodeAxisLength / (slots.length + nodeSpread));
-    }
+  slotsPerLayer.forEach((slots, layerIndex) => {
+    const nodePositions = axisPositions(slots.length, nodeAxisLength, nodeSpread, nodeMargin);
     const layerNodes: { nodeIndex: number; x: number; y: number }[] = [];
     slots.forEach((slot, visibleIndex) => {
       const layerPosition = layerPositions[layerIndex];
@@ -110,13 +141,6 @@ export function layoutDenseNetwork(options: DenseNetworkLayoutOptions): DenseNet
     });
     displayedNodes.push(layerNodes);
   });
-
-  // Default radius: 1/8 of the smallest displayed inter-node gap; if every
-  // layer displays a single node there is no gap, so fall back to L/25 (spec §8).
-  const nodeRadius =
-    options.nodeRadius ??
-    (Number.isFinite(smallestNodeGap) ? smallestNodeGap / 8 : nodeAxisLength / 25);
-  const ellipsisDotRadius = options.ellipsisDotRadius ?? nodeRadius / 4;
 
   const edges: LayoutEdge[] = [];
   let edgeIndex = 0;
