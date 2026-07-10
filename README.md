@@ -176,8 +176,20 @@ npm run build      # emits ESM + .d.ts to dist/
 npm run demo       # then open http://localhost:3000/demo/ (build first)
 ```
 
-See [DESIGN_SPEC.md](DESIGN_SPEC.md) for the full specification and
-[RELEASING.md](RELEASING.md) for the release process.
+### Releasing
+
+```sh
+npm version patch   # or: minor / major — bumps package.json and creates the git tag
+git push --follow-tags
+```
+
+The [Release workflow](.github/workflows/release.yml) runs on the `v*` tag:
+typecheck, tests, and build, then `npm publish` authenticated via npm trusted
+publishing (OIDC, no stored token) with provenance attached. It verifies that
+the tag matches the package version and skips publishing if that version is
+already on npm.
+
+See [DESIGN_SPEC.md](DESIGN_SPEC.md) for the full specification.
 
 ## License
 
