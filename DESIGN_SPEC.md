@@ -129,6 +129,7 @@ Validation rules:
 * `maxDisplayedNodes` must be an even integer `>= 2`.
 * `viewBox.width` and `viewBox.height`, if provided, must be positive finite numbers.
 * `nodeSpread` and `layerSpread` must be finite numbers >= -1.
+* `edgeLabelPos`, if provided, must be a finite number between 0 and 1 inclusive.
 * `orientation`, if provided, must be `"horizontal"` or `"vertical"`.
 * `responsive`, if provided, must be boolean.
 * `strict`, if provided, must be boolean.
@@ -520,7 +521,7 @@ nodeLabel: node =>
 
 Node labels should be centered inside node circles by default.
 
-Edge labels should be centered at the edge midpoint by default.
+Edge labels should be placed at the fractional position `edgeLabelPos` along the edge, measured from the source node (0 = source, 1 = target). The default is 0.4: labels drawn exactly at the midpoint (0.5) often overlap where symmetric edges cross, especially when adjacent layers have the same number of nodes.
 
 Labels should be drawn above edges, nodes, and ellipsis glyphs.
 
@@ -769,6 +770,7 @@ type DenseNetworkLayoutOptions = {
   nodeRadius?: number;
   ellipsisDotRadius?: number;
   nodeStrokeWidth?: number;
+  edgeLabelPos?: number;
 };
 
 type DenseNetworkSvgOptions = DenseNetworkLayoutOptions & {

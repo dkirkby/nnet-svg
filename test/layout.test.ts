@@ -293,6 +293,15 @@ describe("node stroke width", () => {
   });
 });
 
+describe("edge label position", () => {
+  it("defaults to 0.4 and passes explicit values through", () => {
+    expect(layoutDenseNetwork({ layers: [3, 2] }).edgeLabelPos).toBe(0.4);
+    expect(layoutDenseNetwork({ layers: [3, 2], edgeLabelPos: 0.25 }).edgeLabelPos).toBe(0.25);
+    expect(layoutDenseNetwork({ layers: [3, 2], edgeLabelPos: 0 }).edgeLabelPos).toBe(0);
+    expect(layoutDenseNetwork({ layers: [3, 2], edgeLabelPos: 1 }).edgeLabelPos).toBe(1);
+  });
+});
+
 describe("vertical orientation", () => {
   it("is the exact transpose of the horizontal layout", () => {
     const horizontal = layoutDenseNetwork({

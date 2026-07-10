@@ -41,6 +41,7 @@ export function validateLayoutOptions(options: DenseNetworkLayoutOptions): void 
     nodeRadius,
     ellipsisDotRadius,
     nodeStrokeWidth,
+    edgeLabelPos,
   } = options;
 
   if (layers === undefined) {
@@ -114,6 +115,16 @@ export function validateLayoutOptions(options: DenseNetworkLayoutOptions): void 
     (typeof nodeStrokeWidth !== "number" || !Number.isFinite(nodeStrokeWidth) || nodeStrokeWidth < 0)
   ) {
     fail(`nodeStrokeWidth must be a non-negative finite number; received ${show(nodeStrokeWidth)}`);
+  }
+
+  if (
+    edgeLabelPos !== undefined &&
+    (typeof edgeLabelPos !== "number" ||
+      !Number.isFinite(edgeLabelPos) ||
+      edgeLabelPos < 0 ||
+      edgeLabelPos > 1)
+  ) {
+    fail(`edgeLabelPos must be a number between 0 and 1; received ${show(edgeLabelPos)}`);
   }
 }
 

@@ -290,8 +290,8 @@ export function createDenseNetworkSvg(options: DenseNetworkSvgOptions): SVGSVGEl
       mergeAttrs(
         {
           ...LABEL_DEFAULT_ATTRS,
-          x: (edge.x1 + edge.x2) / 2,
-          y: (edge.y1 + edge.y2) / 2,
+          x: edge.x1 + (edge.x2 - edge.x1) * layout.edgeLabelPos,
+          y: edge.y1 + (edge.y2 - edge.y1) * layout.edgeLabelPos,
           class: cls("edge-label"),
         },
         userAttrs,

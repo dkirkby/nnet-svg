@@ -15,6 +15,10 @@ const DEFAULT_MAX_DISPLAYED_NODES = 12;
 // visible for small nodes (spec §8).
 const MIN_NODE_STROKE_WIDTH = 0.75;
 
+// Default fractional edge label position (spec §16): slightly off the
+// midpoint, where symmetric edge labels would overlap.
+const DEFAULT_EDGE_LABEL_POS = 0.4;
+
 const DEFAULT_VIEWBOX = {
   horizontal: { width: 640, height: 360 },
   vertical: { width: 360, height: 640 },
@@ -106,6 +110,7 @@ export function layoutDenseNetwork(options: DenseNetworkLayoutOptions): DenseNet
   const ellipsisDotRadius = options.ellipsisDotRadius ?? nodeRadius / 4;
   const nodeStrokeWidth =
     options.nodeStrokeWidth ?? Math.max(nodeRadius / 8, MIN_NODE_STROKE_WIDTH);
+  const edgeLabelPos = options.edgeLabelPos ?? DEFAULT_EDGE_LABEL_POS;
 
   // A spread of -1 pins outer positions to the axis ends, which would clip
   // node circles at the viewBox boundary; pad that axis by the drawn node
@@ -178,5 +183,6 @@ export function layoutDenseNetwork(options: DenseNetworkLayoutOptions): DenseNet
     nodeRadius,
     ellipsisDotRadius,
     nodeStrokeWidth,
+    edgeLabelPos,
   };
 }

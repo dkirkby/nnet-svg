@@ -75,10 +75,19 @@
           },
         ],
         [
-          "edge labels at midpoints",
+          "edge labels at default edgeLabelPos 0.4",
           {
             layers: [2, 2],
             nodeSpread: 1,
+            edgeLabel: (edge) => `e${edge.edgeIndex}`,
+          },
+        ],
+        [
+          "edge labels at midpoint (edgeLabelPos 0.5, overlap)",
+          {
+            layers: [2, 2],
+            nodeSpread: 1,
+            edgeLabelPos: 0.5,
             edgeLabel: (edge) => `e${edge.edgeIndex}`,
           },
         ],

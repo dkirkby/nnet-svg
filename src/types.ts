@@ -43,6 +43,12 @@ export type DenseNetworkLayoutOptions = {
   ellipsisDotRadius?: number;
   /** Node circle stroke width. Default: nodeRadius / 8, minimum 0.75. */
   nodeStrokeWidth?: number;
+  /**
+   * Fractional position of edge labels along their edge, measured from the
+   * source node (0 = source, 1 = target). Default: 0.4, slightly off the
+   * midpoint where symmetric edge labels would overlap.
+   */
+  edgeLabelPos?: number;
 };
 
 /** Reference to a real node, using true original indices. */
@@ -175,4 +181,6 @@ export type DenseNetworkLayout = {
   ellipsisDotRadius: number;
   /** Resolved node circle stroke width (default or from options). */
   nodeStrokeWidth: number;
+  /** Resolved fractional edge label position (default or from options). */
+  edgeLabelPos: number;
 };

@@ -96,6 +96,17 @@ describe("validateLayoutOptions", () => {
     expect(layout({ layers: [3, 2], nodeStrokeWidth: 2 })).not.toThrow();
   });
 
+  it("requires edgeLabelPos to be a number between 0 and 1", () => {
+    for (const bad of [-0.1, 1.5, NaN, Infinity, "0.4", true]) {
+      expect(layout({ layers: [3, 2], edgeLabelPos: bad })).toThrow(
+        /edgeLabelPos must be a number between 0 and 1/,
+      );
+    }
+    for (const good of [0, 0.4, 0.5, 1]) {
+      expect(layout({ layers: [3, 2], edgeLabelPos: good })).not.toThrow();
+    }
+  });
+
   it("requires radii to be positive finite numbers", () => {
     for (const name of ["nodeRadius", "ellipsisDotRadius"]) {
       for (const bad of [0, -1, NaN, Infinity, "5"]) {

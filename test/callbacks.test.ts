@@ -147,21 +147,54 @@ describe("labels (spec section 16)", () => {
     expect(labels[0].getAttribute("font-size")).toBe("10");
   });
 
-  it("centers edge labels at edge midpoints", () => {
+  it("places edge labels at the default edgeLabelPos of 0.4 from the source", () => {
     const options: DenseNetworkSvgOptions = {
       layers: [2, 2],
       edgeLabel: (edge) => `e${edge.edgeIndex}`,
     };
     const svg = createDenseNetworkSvg(options);
     const layout = layoutDenseNetwork(options);
+    expect(layout.edgeLabelPos).toBe(0.4);
     const labels = all(svg, ".dn-edge-label");
     expect(labels).toHaveLength(4);
     labels.forEach((label, i) => {
       const edge = layout.edges[i];
-      expect(num(label, "x")).toBeCloseTo((edge.x1 + edge.x2) / 2, 9);
-      expect(num(label, "y")).toBeCloseTo((edge.y1 + edge.y2) / 2, 9);
+      expect(num(label, "x")).toBeCloseTo(edge.x1 + 0.4 * (edge.x2 - edge.x1), 9);
+      expect(num(label, "y")).toBeCloseTo(edge.y1 + 0.4 * (edge.y2 - edge.y1), 9);
       expect(label.textContent).toBe(`e${i}`);
     });
+  });
+
+  it("honors an explicit edgeLabelPos (0.5 restores the midpoint)", () => {
+    const options: DenseNetworkSvgOptions = {
+      layers: [2, 2],
+      edgeLabelPos: 0.5,
+      edgeLabel: (edge) => `e${edge.edgeIndex}`,
+    };
+    const svg = createDenseNetworkSvg(options);
+    const layout = layoutDenseNetwork(options);
+    all(svg, ".dn-edge-label").forEach((label, i) => {
+      const edge = layout.edges[i];
+      expect(num(label, "x")).toBeCloseTo((edge.x1 + edge.x2) / 2, 9);
+      expect(num(label, "y")).toBeCloseTo((edge.y1 + edge.y2) / 2, 9);
+    });
+  });
+
+  it("separates symmetric edge labels that coincide at the midpoint", () => {
+    // In a [2, 2] network the two crossing edges (0->1 and 1->0) intersect
+    // exactly at the center, so midpoint labels would sit on top of each other.
+    const at = (pos?: number) => {
+      const svg = createDenseNetworkSvg({
+        layers: [2, 2],
+        ...(pos === undefined ? {} : { edgeLabelPos: pos }),
+        edgeLabel: (edge) => `e${edge.edgeIndex}`,
+      });
+      return all(svg, ".dn-edge-label").map((label) => `${num(label, "x")},${num(label, "y")}`);
+    };
+    const midpoint = at(0.5);
+    expect(midpoint[1]).toBe(midpoint[2]); // crossing edges e1 and e2 collide
+    const defaults = at();
+    expect(new Set(defaults).size).toBe(4); // all four labels distinct
   });
 
   it("skips null/undefined labels entirely", () => {
