@@ -233,6 +233,78 @@ describe("labels (spec section 16)", () => {
   });
 });
 
+describe("error handling and strict mode (spec section 24)", () => {
+  const callbackNames = [
+    "nodeValue",
+    "edgeValue",
+    "nodeAttrs",
+    "edgeAttrs",
+    "nodeLabel",
+    "edgeLabel",
+    "nodeLabelAttrs",
+    "edgeLabelAttrs",
+    "nodeTitle",
+    "edgeTitle",
+  ] as const;
+
+  function throwingOptions(
+    name: (typeof callbackNames)[number],
+    strict: boolean,
+  ): DenseNetworkSvgOptions {
+    const options: DenseNetworkSvgOptions = { layers: [2, 2], strict };
+    // Label-attr callbacks only run when a label is rendered.
+    if (name === "nodeLabelAttrs") options.nodeLabel = () => "x";
+    if (name === "edgeLabelAttrs") options.edgeLabel = () => "x";
+    (options as Record<string, unknown>)[name] = () => {
+      throw new Error(`${name} boom`);
+    };
+    return options;
+  }
+
+  for (const name of callbackNames) {
+    it(`non-strict: logs and keeps rendering when ${name} throws`, () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const svg = createDenseNetworkSvg(throwingOptions(name, false));
+      expect(errorSpy).toHaveBeenCalled();
+      expect(String(errorSpy.mock.calls[0][0])).toContain(name);
+      expect(all(svg, "circle[data-kind=node]")).toHaveLength(4);
+      expect(all(svg, "line")).toHaveLength(4);
+    });
+
+    it(`strict: rethrows when ${name} throws`, () => {
+      expect(() => createDenseNetworkSvg(throwingOptions(name, true))).toThrow(`${name} boom`);
+    });
+  }
+
+  it("falls back to default attrs when nodeAttrs throws in non-strict mode", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const svg = createDenseNetworkSvg(throwingOptions("nodeAttrs", false));
+    const circle = svg.querySelector("circle[data-kind=node]")!;
+    expect(circle.getAttribute("fill")).toBe("white");
+    expect(circle.getAttribute("class")).toBe("dn-node");
+  });
+
+  it("strict mode throws on non-number nodeValue results", () => {
+    expect(() =>
+      createDenseNetworkSvg({
+        layers: [2, 2],
+        strict: true,
+        nodeValue: () => "bad" as unknown as number,
+      }),
+    ).toThrow(/nodeValue must return a number, null, or undefined/);
+  });
+
+  it("strict mode throws on non-number edgeValue results", () => {
+    expect(() =>
+      createDenseNetworkSvg({
+        layers: [2, 2],
+        strict: true,
+        edgeValue: () => ({}) as unknown as number,
+      }),
+    ).toThrow(/edgeValue must return a number, null, or undefined/);
+  });
+});
+
 describe("titles (spec section 17)", () => {
   it("adds <title> children to nodes and edges, skipping null", () => {
     const svg = createDenseNetworkSvg({

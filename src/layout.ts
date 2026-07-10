@@ -9,7 +9,7 @@ import type {
   LayoutItem,
 } from "./types.js";
 
-const DEFAULT_MAX_DISPLAYED_NODES = 12;
+export const DEFAULT_MAX_DISPLAYED_NODES = 12;
 
 // Minimum default node stroke width in viewBox units, so strokes stay
 // visible for small nodes (spec §8).

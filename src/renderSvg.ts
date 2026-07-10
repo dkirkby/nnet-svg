@@ -2,7 +2,7 @@
 
 import { create } from "d3-selection";
 import type { Selection } from "d3-selection";
-import { layoutDenseNetwork } from "./layout.js";
+import { DEFAULT_MAX_DISPLAYED_NODES, layoutDenseNetwork } from "./layout.js";
 import { validateSvgOptions } from "./validate.js";
 import type {
   DenseNetworkSvgOptions,
@@ -12,6 +12,7 @@ import type {
   LayoutNodeItem,
   NodeDatum,
   NodeRef,
+  Orientation,
   SvgAttrs,
 } from "./types.js";
 
@@ -103,6 +104,31 @@ function coerceValue(name: string, raw: unknown, strict: boolean): number | unde
 
 const nodeKey = (layerIndex: number, nodeIndex: number) => `${layerIndex}:${nodeIndex}`;
 
+// Generated id prefixes (spec §20): unique per call so multiple independent
+// networks can coexist on one page; the random suffix guards against other
+// copies of this module keeping their own counters.
+let idCounter = 0;
+function generateIdPrefix(): string {
+  idCounter += 1;
+  return `dn-${idCounter.toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+/** Default accessible description summarizing the network (spec §18). */
+function defaultDescription(
+  layers: number[],
+  orientation: Orientation,
+  maxDisplayedNodes: number,
+  truncated: boolean,
+): string {
+  let text =
+    `Dense neural network with ${layers.length} layers of sizes ${layers.join(", ")}, ` +
+    `drawn in ${orientation} orientation.`;
+  if (truncated) {
+    text += ` Layers with more than ${maxDisplayedNodes} nodes are truncated around a central ellipsis.`;
+  }
+  return text;
+}
+
 /**
  * Creates and returns a new `SVGSVGElement` displaying the network.
  * This is the primary public API (spec §3.1).
@@ -183,9 +209,25 @@ export function createDenseNetworkSvg(options: DenseNetworkSvgOptions): SVGSVGEl
   const datumOfNode = (item: LayoutNodeItem): NodeDatum =>
     nodeDatums.get(nodeKey(item.layerIndex, item.nodeIndex))!;
 
-  // ---- Root <svg> (spec §7.2, §23): defaults, then responsive attrs, then
-  // user svgAttrs. svgAttrs.viewBox is ignored: the viewBox is controlled
-  // exclusively by options.viewBox.
+  // ---- Accessibility metadata (spec §18) and generated ids (spec §20).
+  // The description always exists (user-provided or generated); the title
+  // only when the option is given. aria-labelledby lists whichever exist.
+  const idPrefix = options.idPrefix ?? generateIdPrefix();
+  const titleId = options.title === undefined ? undefined : `${idPrefix}-title`;
+  const descId = `${idPrefix}-desc`;
+  const truncated = layout.items.some((item) => item.kind === "ellipsis");
+  const desc =
+    options.desc ??
+    defaultDescription(
+      options.layers,
+      layout.orientation,
+      options.maxDisplayedNodes ?? DEFAULT_MAX_DISPLAYED_NODES,
+      truncated,
+    );
+
+  // ---- Root <svg> (spec §7.2, §23): defaults and accessibility attrs, then
+  // responsive attrs, then user svgAttrs. svgAttrs.viewBox is ignored: the
+  // viewBox is controlled exclusively by options.viewBox.
   const { viewBox: _unsupported, ...userSvgAttrs } = options.svgAttrs ?? {};
   const responsiveAttrs: SvgAttrs = responsive
     ? { width: "100%", style: "max-width: 100%; height: auto;" }
@@ -196,6 +238,8 @@ export function createDenseNetworkSvg(options: DenseNetworkSvgOptions): SVGSVGEl
       viewBox: `0 0 ${width} ${height}`,
       preserveAspectRatio: "xMidYMid meet",
       class: cls("root"),
+      role: "img",
+      "aria-labelledby": titleId === undefined ? descId : `${titleId} ${descId}`,
       ...responsiveAttrs,
     },
     userSvgAttrs,
@@ -203,6 +247,11 @@ export function createDenseNetworkSvg(options: DenseNetworkSvgOptions): SVGSVGEl
 
   const svg = create("svg");
   setAttrs(svg, rootAttrs);
+
+  if (titleId !== undefined) {
+    svg.append("title").attr("id", titleId).text(options.title ?? "");
+  }
+  svg.append("desc").attr("id", descId).text(desc);
 
   // Drawing order (spec §22): edges behind nodes/ellipses, labels on top.
   const edgesGroup = svg.append("g").attr("class", cls("edges"));
