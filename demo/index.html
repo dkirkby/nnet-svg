@@ -57,6 +57,31 @@
           "responsive: false, viewBox 320x180",
           { layers: [3, 5, 2], responsive: false, viewBox: { width: 320, height: 180 } },
         ],
+        [
+          "values: node labels/fills, edge widths, tooltips",
+          {
+            layers: [3, 4, 2],
+            nodeValue: (node) => Math.sin(1 + 7 * node.layerIndex + 3 * node.nodeIndex),
+            nodeLabel: (node) => node.value.toFixed(1),
+            nodeLabelAttrs: () => ({ "font-size": 7 }),
+            nodeAttrs: (node) => ({ fill: node.value > 0 ? "#dbeafe" : "#fee2e2" }),
+            nodeTitle: (node) => `node [${node.layerIndex}, ${node.nodeIndex}] = ${node.value.toFixed(4)}`,
+            edgeValue: (edge) => Math.cos(edge.edgeIndex),
+            edgeAttrs: (edge) => ({
+              "stroke-width": 0.5 + 2.5 * Math.abs(edge.value),
+              "stroke-opacity": 0.35,
+            }),
+            edgeTitle: (edge) => `weight = ${edge.value.toFixed(4)}`,
+          },
+        ],
+        [
+          "edge labels at midpoints",
+          {
+            layers: [2, 2],
+            nodeSpread: 1,
+            edgeLabel: (edge) => `e${edge.edgeIndex}`,
+          },
+        ],
       ];
       for (const [caption, options] of examples) {
         const figure = document.createElement("figure");
