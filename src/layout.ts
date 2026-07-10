@@ -11,6 +11,10 @@ import type {
 
 const DEFAULT_MAX_DISPLAYED_NODES = 12;
 
+// Minimum default node stroke width in viewBox units, so strokes stay
+// visible for small nodes (spec §8).
+const MIN_NODE_STROKE_WIDTH = 0.75;
+
 const DEFAULT_VIEWBOX = {
   horizontal: { width: 640, height: 360 },
   vertical: { width: 360, height: 640 },
@@ -100,11 +104,15 @@ export function layoutDenseNetwork(options: DenseNetworkLayoutOptions): DenseNet
     options.nodeRadius ??
     (Number.isFinite(smallestNodeGap) ? smallestNodeGap / 8 : nodeAxisLength / 25);
   const ellipsisDotRadius = options.ellipsisDotRadius ?? nodeRadius / 4;
+  const nodeStrokeWidth =
+    options.nodeStrokeWidth ?? Math.max(nodeRadius / 8, MIN_NODE_STROKE_WIDTH);
 
   // A spread of -1 pins outer positions to the axis ends, which would clip
-  // node circles at the viewBox boundary; pad that axis by nodeRadius (spec §8).
-  const layerMargin = layerSpread === -1 ? nodeRadius : 0;
-  const nodeMargin = nodeSpread === -1 ? nodeRadius : 0;
+  // node circles at the viewBox boundary; pad that axis by the drawn node
+  // extent, radius plus half the (edge-centered) stroke (spec §8).
+  const margin = nodeRadius + nodeStrokeWidth / 2;
+  const layerMargin = layerSpread === -1 ? margin : 0;
+  const nodeMargin = nodeSpread === -1 ? margin : 0;
 
   const layerPositions = axisPositions(
     options.layers.length,
@@ -169,5 +177,6 @@ export function layoutDenseNetwork(options: DenseNetworkLayoutOptions): DenseNet
     edges,
     nodeRadius,
     ellipsisDotRadius,
+    nodeStrokeWidth,
   };
 }

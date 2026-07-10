@@ -41,6 +41,8 @@ export type DenseNetworkLayoutOptions = {
   nodeRadius?: number;
   /** Radius of the three ellipsis dots. Default: nodeRadius / 4. */
   ellipsisDotRadius?: number;
+  /** Node circle stroke width. Default: nodeRadius / 8, minimum 0.75. */
+  nodeStrokeWidth?: number;
 };
 
 /** Reference to a real node, using true original indices. */
@@ -171,4 +173,6 @@ export type DenseNetworkLayout = {
   nodeRadius: number;
   /** Resolved ellipsis dot radius (default or from options). */
   ellipsisDotRadius: number;
+  /** Resolved node circle stroke width (default or from options). */
+  nodeStrokeWidth: number;
 };

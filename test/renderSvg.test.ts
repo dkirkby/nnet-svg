@@ -173,11 +173,12 @@ describe("data attributes", () => {
 describe("default styling", () => {
   const svg = createDenseNetworkSvg({ layers: [100, 3], maxDisplayedNodes: 6 });
 
-  it("styles nodes as white circles with currentColor strokes", () => {
+  it("styles nodes as white circles with the resolved stroke width", () => {
+    const layout = layoutDenseNetwork({ layers: [100, 3], maxDisplayedNodes: 6 });
     const circle = svg.querySelector("circle[data-kind=node]")!;
     expect(circle.getAttribute("fill")).toBe("white");
     expect(circle.getAttribute("stroke")).toBe("currentColor");
-    expect(circle.getAttribute("stroke-width")).toBe("1.5");
+    expect(num(circle, "stroke-width")).toBeCloseTo(layout.nodeStrokeWidth, 9);
   });
 
   it("styles edges as translucent currentColor lines", () => {

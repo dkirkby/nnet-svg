@@ -40,6 +40,7 @@ export function validateLayoutOptions(options: DenseNetworkLayoutOptions): void 
     layerSpread,
     nodeRadius,
     ellipsisDotRadius,
+    nodeStrokeWidth,
   } = options;
 
   if (layers === undefined) {
@@ -105,6 +106,14 @@ export function validateLayoutOptions(options: DenseNetworkLayoutOptions): void 
     ) {
       fail(`${name} must be a positive finite number; received ${show(value)}`);
     }
+  }
+
+  // Zero is allowed: it means no visible stroke.
+  if (
+    nodeStrokeWidth !== undefined &&
+    (typeof nodeStrokeWidth !== "number" || !Number.isFinite(nodeStrokeWidth) || nodeStrokeWidth < 0)
+  ) {
+    fail(`nodeStrokeWidth must be a non-negative finite number; received ${show(nodeStrokeWidth)}`);
   }
 }
 

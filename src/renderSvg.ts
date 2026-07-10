@@ -7,10 +7,10 @@ import { validateSvgOptions } from "./validate.js";
 import type { DenseNetworkSvgOptions, SvgAttrs } from "./types.js";
 
 // Default styling (spec §15): neutral and legible, overridable per element.
+// The node stroke-width is resolved by the layout (spec §8), not fixed here.
 const NODE_DEFAULT_ATTRS: SvgAttrs = {
   fill: "white",
   stroke: "currentColor",
-  "stroke-width": 1.5,
 };
 
 const EDGE_DEFAULT_ATTRS: SvgAttrs = {
@@ -118,7 +118,11 @@ export function createDenseNetworkSvg(options: DenseNetworkSvgOptions): SVGSVGEl
         .attr("cx", item.x)
         .attr("cy", item.y)
         .attr("r", layout.nodeRadius);
-      setAttrs(circle, { ...NODE_DEFAULT_ATTRS, class: cls("node") });
+      setAttrs(circle, {
+        ...NODE_DEFAULT_ATTRS,
+        "stroke-width": layout.nodeStrokeWidth,
+        class: cls("node"),
+      });
     } else {
       const glyph = itemsGroup
         .append("g")

@@ -245,12 +245,13 @@ For both nodes and layers, L/(N+spread) should only be calculated when N>1. This
 
 Both spread parameters default to zero.
 
-When nodeSpread equals -1 the outer nodes are pinned at the ends of the node axis, which would clip their circles at the viewBox boundary. To avoid this, the node axis is padded with a margin equal to nodeRadius at each end: positions are computed over the reduced length L - 2*nodeRadius and then shifted by nodeRadius. The layer axis is padded the same way when layerSpread equals -1. No margin is applied for spread values greater than -1.
+When nodeSpread equals -1 the outer nodes are pinned at the ends of the node axis, which would clip their circles at the viewBox boundary. To avoid this, the node axis is padded at each end with a margin equal to nodeRadius + nodeStrokeWidth/2 (the stroke is centered on the circle edge, so the drawn extent of a node is nodeRadius + nodeStrokeWidth/2): positions are computed over the reduced length L - 2*margin and then shifted by margin. The layer axis is padded the same way when layerSpread equals -1. No margin is applied for spread values greater than -1.
 
 The default nodeRadius should be equal 1/8 of the smallest inter-node gap in the network. In case all layers have 1 node, use L/25.
 The default ellipsisDotRadius should be 1/4 of nodeRadius.
+The default nodeStrokeWidth is nodeRadius/8, clipped to a minimum of 0.75 viewBox units so strokes remain visible for small nodes.
 
-The default nodeRadius is computed from the unpadded gaps, before any spread margin is applied (the margin depends on nodeRadius, so the radius must be resolved first).
+The default nodeRadius is computed from the unpadded gaps, before any spread margin is applied (the margin depends on nodeRadius and nodeStrokeWidth, so both must be resolved first).
 
 ## 9. Node Truncation
 
@@ -478,7 +479,7 @@ Default styling should be neutral and legible. Example defaults:
 node:
   fill: "white"
   stroke: "currentColor"
-  stroke-width: 1.5
+  stroke-width: resolved nodeStrokeWidth (see Section 8)
 
 edge:
   stroke: "currentColor"
@@ -767,6 +768,7 @@ type DenseNetworkLayoutOptions = {
   layerSpread?: number;
   nodeRadius?: number;
   ellipsisDotRadius?: number;
+  nodeStrokeWidth?: number;
 };
 
 type DenseNetworkSvgOptions = DenseNetworkLayoutOptions & {

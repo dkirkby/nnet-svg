@@ -97,22 +97,30 @@ describe("spacing (spec worked example: layers [3, 8, 4, 1], defaults)", () => {
 });
 
 describe("spread parameters", () => {
-  it("nodeSpread -1 pins outer nodes one nodeRadius margin from the axis edges", () => {
+  it("nodeSpread -1 pads the node axis by nodeRadius + nodeStrokeWidth/2", () => {
     const layout = layoutDenseNetwork({ layers: [4, 2], nodeSpread: -1 });
-    // Unpadded gaps: 360/3 = 120 (layer 0), 360/1 = 360 (layer 1) -> radius 15.
+    // Unpadded gaps: 360/3 = 120 (layer 0), 360/1 = 360 (layer 1)
+    // -> radius 15, stroke width 15/8 = 1.875, margin 15.9375.
     expectClose(layout.nodeRadius, 15);
+    expectClose(layout.nodeStrokeWidth, 1.875);
+    const margin = layout.nodeRadius + layout.nodeStrokeWidth / 2;
     const ys = layerNodes(layout, 0).map((node) => node.y);
-    // Padded axis [15, 345], gap (360 - 30)/3 = 110.
-    [15, 125, 235, 345].forEach((expected, i) => expectClose(ys[i], expected));
-    expectClose(ys[0], layout.nodeRadius);
-    expectClose(360 - ys[3], layout.nodeRadius);
+    expectClose(ys[0], margin);
+    expectClose(360 - ys[3], margin);
+    // Uniform gaps over the padded axis.
+    expectClose(ys[1] - ys[0], (360 - 2 * margin) / 3);
   });
 
-  it("nodeSpread -1 margin follows an explicit nodeRadius", () => {
-    const layout = layoutDenseNetwork({ layers: [4, 2], nodeSpread: -1, nodeRadius: 10 });
+  it("nodeSpread -1 margin follows explicit nodeRadius and nodeStrokeWidth", () => {
+    const layout = layoutDenseNetwork({
+      layers: [4, 2],
+      nodeSpread: -1,
+      nodeRadius: 10,
+      nodeStrokeWidth: 4,
+    });
+    // Margin 10 + 4/2 = 12; usable 336; gap 112.
     const ys = layerNodes(layout, 0).map((node) => node.y);
-    expectClose(ys[0], 10);
-    expectClose(ys[3], 350);
+    [12, 124, 236, 348].forEach((expected, i) => expectClose(ys[i], expected));
   });
 
   it("nodeSpread +1 makes edge insets equal to inter-node gaps", () => {
@@ -128,12 +136,13 @@ describe("spread parameters", () => {
     [60, 300].forEach((expected, i) => expectClose(ys[i], expected));
   });
 
-  it("layerSpread -1 pins outer layers one nodeRadius margin from the axis edges", () => {
+  it("layerSpread -1 pads the layer axis by the same margin", () => {
     const layout = layoutDenseNetwork({ layers: [2, 2, 2], layerSpread: -1 });
-    // Node gaps: 360/2 = 180 -> radius 22.5; padded layer axis [22.5, 617.5].
+    // Node gaps: 360/2 = 180 -> radius 22.5, stroke width 22.5/8 = 2.8125.
     expectClose(layout.nodeRadius, 22.5);
+    const margin = layout.nodeRadius + layout.nodeStrokeWidth / 2;
     const xs = [0, 1, 2].map((layerIndex) => layerNodes(layout, layerIndex)[0].x);
-    [22.5, 320, 617.5].forEach((expected, i) => expectClose(xs[i], expected));
+    [margin, 320, 640 - margin].forEach((expected, i) => expectClose(xs[i], expected));
   });
 
   it("pads both axes when both spreads are -1", () => {
@@ -142,11 +151,13 @@ describe("spread parameters", () => {
       nodeSpread: -1,
       layerSpread: -1,
       nodeRadius: 20,
+      nodeStrokeWidth: 8,
     });
+    // Margin 20 + 8/2 = 24 on both axes.
     const ys = layerNodes(layout, 0).map((node) => node.y);
-    [20, 340].forEach((expected, i) => expectClose(ys[i], expected));
+    [24, 336].forEach((expected, i) => expectClose(ys[i], expected));
     const xs = [0, 1].map((layerIndex) => layerNodes(layout, layerIndex)[0].x);
-    [20, 620].forEach((expected, i) => expectClose(xs[i], expected));
+    [24, 616].forEach((expected, i) => expectClose(xs[i], expected));
   });
 
   it("a single node with spread -1 is centered without dividing by zero", () => {
@@ -260,6 +271,25 @@ describe("default radii", () => {
 
     const both = layoutDenseNetwork({ layers: [3, 2], nodeRadius: 7, ellipsisDotRadius: 3 });
     expect(both.ellipsisDotRadius).toBe(3);
+  });
+});
+
+describe("node stroke width", () => {
+  it("defaults to nodeRadius/8 above the minimum", () => {
+    const layout = layoutDenseNetwork({ layers: [4, 4, 4] });
+    expectClose(layout.nodeRadius, 11.25);
+    expectClose(layout.nodeStrokeWidth, 1.40625);
+  });
+
+  it("clips to the 0.75 minimum for small nodes", () => {
+    const layout = layoutDenseNetwork({ layers: [3, 8, 4, 1], orientation: "vertical" });
+    expectClose(layout.nodeRadius, 5.625); // 5.625/8 = 0.703 < 0.75
+    expect(layout.nodeStrokeWidth).toBe(0.75);
+  });
+
+  it("passes an explicit nodeStrokeWidth through", () => {
+    const layout = layoutDenseNetwork({ layers: [3, 2], nodeStrokeWidth: 3 });
+    expect(layout.nodeStrokeWidth).toBe(3);
   });
 });
 

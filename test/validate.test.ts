@@ -86,6 +86,16 @@ describe("validateLayoutOptions", () => {
     }
   });
 
+  it("requires nodeStrokeWidth to be a non-negative finite number", () => {
+    for (const bad of [-1, NaN, Infinity, "2", true]) {
+      expect(layout({ layers: [3, 2], nodeStrokeWidth: bad })).toThrow(
+        /nodeStrokeWidth must be a non-negative finite number/,
+      );
+    }
+    expect(layout({ layers: [3, 2], nodeStrokeWidth: 0 })).not.toThrow();
+    expect(layout({ layers: [3, 2], nodeStrokeWidth: 2 })).not.toThrow();
+  });
+
   it("requires radii to be positive finite numbers", () => {
     for (const name of ["nodeRadius", "ellipsisDotRadius"]) {
       for (const bad of [0, -1, NaN, Infinity, "5"]) {
