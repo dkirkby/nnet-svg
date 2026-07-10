@@ -1,6 +1,6 @@
 {
   "name": "nnet-svg",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Render a dense feed-forward neural network as a static SVG",
   "keywords": [
     "neural-network",
