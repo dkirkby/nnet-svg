@@ -13,8 +13,13 @@ describe("package skeleton", () => {
     expect(typeof layoutDenseNetwork).toBe("function");
   });
 
-  it("stubs throw until their phase lands", () => {
-    expect(() => layoutDenseNetwork({ layers: [2, 2] })).toThrow(/not implemented/);
+  it("computes a layout", () => {
+    const layout = layoutDenseNetwork({ layers: [2, 2] });
+    expect(layout.items).toHaveLength(4);
+    expect(layout.edges).toHaveLength(4);
+  });
+
+  it("renderer stub throws until Phase 3 lands", () => {
     expect(() => createDenseNetworkSvg({ layers: [2, 2] })).toThrow(/not implemented/);
   });
 });
